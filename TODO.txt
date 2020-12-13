@@ -1,0 +1,17 @@
+in main.py rework the IDS and vidInfo loops to limit the number of api calls 
+DONE 1. using max results and a similar structure to the vidData structure
+	hopefully will find a simplier way to do this rn it calls vidData to get the title and resource ID for all items in list
+	then it goes thru vidInfo to get the videoId then <--- does this item by item and needs to maxResults loop to prevent 1000+ api calls per run 
+	wish there was a way to get rid of the middle man function
+2. work on getting the formatting in ytData better (finer understanding of pandas)
+3. start integrating matplotlib to show analyze.py results
+
+in analyze.py
+1. get a view change counter, starting from run by run, to daily, 7 days <--- idk how this will be accomplished yet
+2. ^ can do the same for likes - dislikes - and comments, need to look into if theres a way to do this with the whole playlist
+3. try to find a way to see what video the user clicks on first, this would allow for more personalized results idk if youtube api allows for that tho
+4. figure out most popular artist in playlist, figure out most popular new artist(will have to keep a tally in an aux file) 
+
+create plotting.py 
+for handling the matplotlib part of the program, and when going to a webpage will be deleted and replaced with a JS library
+will be plotting analyze.py data 
