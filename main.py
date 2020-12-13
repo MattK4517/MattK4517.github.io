@@ -3,7 +3,9 @@ import pandas as pd
 import google_auth_oauthlib.flow
 import googleapiclient.discovery
 import googleapiclient.errors
-
+import analyze as anlz
+# 4032
+# 4068
 scopes = ["https://www.googleapis.com/auth/youtube.readonly"]
 xlsx = pd.ExcelFile('ytData.xlsx')
 prevData = pd.read_excel('ytData.xlsx')
@@ -26,30 +28,34 @@ def main():
         api_service_name, api_version, credentials=credentials)
 
     request = youtube.playlists().list(
-        part="snippet,contentDetails",
-        maxResults=50,
-        mine=True,
-    )
+         part="snippet,contentDetails",
+         maxResults=50,
+         mine=True,
+         )
     response = request.execute()
     return(response, youtube)
     #print(response)
 
 def listVids(Id, youtube, pageToken):
-    request = youtube.playlistItems().list(
-        part="snippet, id",
-        playlistId = Id,
-        maxResults = 50,
-        pageToken = pageToken
-    )
-    response = request.execute()
-    return response
+     request = youtube.playlistItems().list(
+         part="snippet, id",
+         playlistId = Id,
+         maxResults = 50,
+         pageToken = pageToken
+     )
+     response = request.execute()
+     return response
 
 def vidInfo(Id, youtube):
+    Id = ",".join(Id)
     request = youtube.videos().list(
         part= "snippet,contentDetails,statistics",
         id= Id,
+        maxResults = 50
         )
     response = request.execute()
+##    print(len(response['items']))
+##    print(response['items'])
     return response
 
 def delVid(Id, youtube):
@@ -72,7 +78,7 @@ if __name__ == "__main__":
     #for vidData['items'][i]['snippet']
     #keys for vidInfo - kind etag items pageInfo
     #keys for vidInfo['items'][i] - kind etag id snippet contentDetails statistics
-    
+
     vidData = listVids(data['items'][8]['id'], auth, "")
     while j < 19:
         try:
@@ -87,14 +93,38 @@ if __name__ == "__main__":
             break
     i = 100
     dt = []
-    for i in range(len(vids)):
-        IDS.append(vidInfo(vids[i][1]['videoId'], auth))
+    IDS = []
+    j = 0
+    calls = 0
+    while j < len(vids)+50:
         
-    for i in range(len(IDS)):
-        if IDS[i]['items'] == []:
-            i += 1
-        dt.append([vids[i][0], IDS[i]['items'][0]['statistics']])
-    df = pd.DataFrame(data = dt)
+        try:
+            setIDS = []
+            for i in range(50):
+                setIDS.append(vids[i+j][1]['videoId'])
+            IDS.append(vidInfo(setIDS, auth))
+            j += 50
+        except IndexError:
+            break
+    for i in range((len(IDS))):
+        for j in range(len(IDS[i]['items'])+50):
+            try:
+                dt.append([vids[j+(50*i)][0], IDS[i]['items'][j]['statistics']['viewCount'], IDS[i]['items'][j]['statistics']['likeCount'],
+                           IDS[i]['items'][j]['statistics']['dislikeCount'], IDS[i]['items'][j]['statistics']['favoriteCount'], IDS[i]['items'][j]['statistics']['commentCount']])
+            except IndexError:
+                break
+            except KeyError:
+                dt.append([vids[j+(50*i)][0], IDS[i]['items'][j]['statistics']['viewCount']])
+    df = pd.DataFrame(data = dt, columns =['Title', 'Views', 'Likes', 'Dislikes', 'UserLiked', 'Comments'])
     with pd.ExcelWriter('ytData.xlsx') as writer:
         df.to_excel(writer)
-        
+##    print(prevData.keys())
+##    print(df.keys())
+    viewChange = []
+    for i in range(len(df['Views'])):
+        viewChange.append(anlz.viewChange(prevData['Views'][i], df['Views'][i]))
+        maxChange = max(viewChange)
+        if viewChange[i] >= maxChange:
+            index = i
+    print(df['Title'][index])
+    print(maxChange)
