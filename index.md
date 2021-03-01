@@ -82,8 +82,6 @@
     </div>
     
     <div id="About" class="tabcontent">
-      <button onclick="authenticate().then(loadClient)">authorize and load</button>
-      <button onclick="execute().then()">execute</button>
     </div> 
   </div>
   </div>
